@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>자동화 요청 등록</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+    .form-section {
+      margin-bottom: 30px;
+    }
+    #canvas {
+      border: 1px solid #ccc;
+      width: 100%;
+      height: 400px;
+      position: relative;
+      background: #f9f9f9;
+      overflow: auto;
+    }
+    .node {
+      position: absolute;
+      background: white;
+      border: 1px solid #333;
+      padding: 10px;
+      cursor: move;
+      text-align: center;
+      min-width: 80px;
+      min-height: 40px;
+    }
+    svg.connector {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>자동화 요청 등록</h2>
+
+  <div class="form-section">
+    <label>업무명: <input type="text" /></label><br /><br />
+    <label>부서: <input type="text" /></label><br /><br />
+    <label>반복 주기: <input type="number" min="1" />
+      <select>
+        <option>주</option>
+        <option>월</option>
+        <option>연</option>
+      </select>
+    </label><br /><br />
+    <label>1회 소요 시간:
+      <input type="number" min="0" placeholder="시" style="width: 60px;" />
+      <input type="number" min="0" placeholder="분" style="width: 60px;" />
+    </label><br /><br />
+    <label>설명:<br />
+      <textarea rows="3" style="width: 100%;"></textarea>
+    </label>
+  </div>
+
+  <div class="form-section">
+    <h3>📌 프로세스 구조도 편집기</h3>
+    <button onclick="addNode()">+ 노드 추가</button>
+    <button onclick="connectMode = !connectMode">↔ 연결 모드</button>
+    <div id="canvas">
+      <svg class="connector"></svg>
+    </div>
+  </div>
+
+  <script>
+    let canvas = document.getElementById("canvas");
+    let nodeId = 0;
+    let connectMode = false;
+    let selectedNode = null;
+    let connections = [];
+
+    function addNode() {
+      const div = document.createElement("div");
+      div.className = "node";
+      div.textContent = "작업";
+      div.style.left = `${Math.random() * 300}px`;
+      div.style.top = `${Math.random() * 300}px`;
+      div.draggable = true;
+      div.dataset.id = nodeId++;
+      div.onclick = (e) => {
+        e.stopPropagation();
+        if (!connectMode) return;
+        if (!selectedNode) {
+          selectedNode = div;
+          div.style.border = "2px solid blue";
+        } else {
+          if (selectedNode !== div) {
+            connections.push([selectedNode, div]);
+            selectedNode.style.border = "1px solid #333";
+            selectedNode = null;
+            drawConnections();
+          }
+        }
+      };
+      div.ondragstart = (e) => {
+        e.dataTransfer.setData("text/plain", null);
+        dragNode = div;
+      };
+      div.ondragend = (e) => {
+        div.style.left = `${e.pageX - canvas.offsetLeft - 40}px`;
+        div.style.top = `${e.pageY - canvas.offsetTop - 20}px`;
+        drawConnections();
+      };
+      canvas.appendChild(div);
+    }
+
+    function drawConnections() {
+      const svg = canvas.querySelector("svg");
+      svg.innerHTML = "";
+      connections.forEach(([from, to]) => {
+        const x1 = from.offsetLeft + from.offsetWidth / 2;
+        const y1 = from.offsetTop + from.offsetHeight / 2;
+        const x2 = to.offsetLeft + to.offsetWidth / 2;
+        const y2 = to.offsetTop + to.offsetHeight / 2;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("stroke", "black");
+        line.setAttribute("stroke-width", 2);
+        svg.appendChild(line);
+      });
+    }
+  </script>
+</body>
+</html>
