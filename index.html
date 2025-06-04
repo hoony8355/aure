@@ -5,30 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>자동화 요청 등록</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
-      font-family: sans-serif;
-      margin: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f7f9fb;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h2, h3 {
+      margin-top: 0;
     }
     .form-section {
+      background: white;
+      padding: 20px;
       margin-bottom: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    input, select, textarea, button {
+      font-size: 1rem;
+      margin: 5px 0;
+    }
+    input, select, textarea {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      width: 100%;
+    }
+    button {
+      padding: 10px 16px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 6px;
+      background-color: #2d6cdf;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #1f4db8;
     }
     #canvas {
-      border: 1px solid #ccc;
+      border: 2px dashed #ccc;
       width: 100%;
       height: 500px;
       position: relative;
-      background: #f9f9f9;
+      background: #fff;
+      border-radius: 10px;
       overflow: auto;
     }
     .node {
       position: absolute;
-      background: white;
-      border: 1px solid #333;
-      padding: 10px;
+      background: #ffffff;
+      border: 2px solid #0077ff;
+      padding: 12px;
+      border-radius: 8px;
+      min-width: 140px;
+      min-height: 60px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       cursor: move;
-      text-align: center;
-      min-width: 120px;
-      min-height: 50px;
     }
     svg.connector {
       position: absolute;
@@ -41,6 +79,8 @@
     .connector line {
       cursor: pointer;
       pointer-events: all;
+      stroke: #333;
+      stroke-width: 2;
     }
   </style>
 </head>
@@ -48,29 +88,29 @@
   <h2>자동화 요청 등록</h2>
 
   <div class="form-section">
-    <label>업무명: <input type="text" id="input-title" /></label><br /><br />
-    <label>부서: <input type="text" id="input-dept" /></label><br /><br />
-    <label>반복 주기: <input type="number" id="input-repeat" min="1" />
-      <select id="input-repeat-unit">
+    <label>업무명: <input type="text" id="input-title" /></label><br />
+    <label>부서: <input type="text" id="input-dept" /></label><br />
+    <label>반복 주기: <input type="number" id="input-repeat" min="1" style="width:80px;display:inline-block;" />
+      <select id="input-repeat-unit" style="width:auto;display:inline-block;">
         <option>주</option>
         <option>월</option>
         <option>연</option>
       </select>
-    </label><br /><br />
+    </label><br />
     <label>1회 소요 시간:
       <input type="number" id="input-hour" min="0" placeholder="시" style="width: 60px;" />
       <input type="number" id="input-min" min="0" placeholder="분" style="width: 60px;" />
-    </label><br /><br />
+    </label><br />
     <label>설명:<br />
-      <textarea id="input-desc" rows="3" style="width: 100%;"></textarea>
+      <textarea id="input-desc" rows="3"></textarea>
     </label>
   </div>
 
   <div class="form-section">
     <h3>📌 프로세스 구조도 편집기</h3>
-    <button onclick="addNode()">+ 노드 추가</button>
-    <button onclick="toggleConnectMode()" id="connectBtn">↔ 연결 모드 OFF</button>
-    <button onclick="saveToFirebase()">💾 Firebase에 저장</button>
+    <button onclick="window.addNode()">+ 노드 추가</button>
+    <button onclick="window.toggleConnectMode()" id="connectBtn">↔ 연결 모드 OFF</button>
+    <button onclick="window.saveToFirebase()">💾 Firebase에 저장</button>
     <div id="canvas">
       <svg class="connector" id="svgConnector"></svg>
     </div>
@@ -92,29 +132,28 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase();
 
-    let canvas = document.getElementById("canvas");
-    let svg = document.getElementById("svgConnector");
+    const canvas = document.getElementById("canvas");
+    const svg = document.getElementById("svgConnector");
     let nodeId = 0;
     let connectMode = false;
     let selectedNode = null;
-    let dragNode = null;
     let connections = [];
 
-    function toggleConnectMode() {
+    window.toggleConnectMode = function () {
       connectMode = !connectMode;
       document.getElementById("connectBtn").innerText = connectMode ? "↔ 연결 모드 ON" : "↔ 연결 모드 OFF";
       if (!connectMode && selectedNode) {
-        selectedNode.style.border = "1px solid #333";
+        selectedNode.style.border = "2px solid #0077ff";
         selectedNode = null;
       }
     }
 
-    function addNode() {
+    window.addNode = function () {
       const div = document.createElement("div");
       div.className = "node";
       div.innerHTML = `<strong>작업</strong><br><input placeholder='상세내용 입력' style='width:90%'><br><small>소요시간: <input type='number' min='1' style='width:50px'> 분</small>`;
       div.style.left = `${Math.random() * 300}px`;
-      div.style.top = `${Math.random() * 300}px`;
+      div.style.top = `${Math.random() * 200}px`;
       div.draggable = true;
       div.dataset.id = nodeId++;
 
@@ -123,11 +162,11 @@
         if (!connectMode) return;
         if (!selectedNode) {
           selectedNode = div;
-          div.style.border = "2px solid blue";
+          div.style.border = "2px solid red";
         } else {
           if (selectedNode !== div && !connectionExists(selectedNode, div)) {
             connections.push([selectedNode, div]);
-            selectedNode.style.border = "1px solid #333";
+            selectedNode.style.border = "2px solid #0077ff";
             selectedNode = null;
             drawConnections();
           }
@@ -136,7 +175,7 @@
 
       div.ondragstart = (e) => {
         e.dataTransfer.setData("text/plain", null);
-        dragNode = div;
+        window.dragNode = div;
       };
 
       div.ondragend = (e) => {
@@ -206,7 +245,7 @@
       push(requestRef, formData)
         .then(() => alert("저장되었습니다!"))
         .catch((err) => alert("저장 실패: " + err.message));
-    };
+    }
   </script>
 </body>
 </html>
