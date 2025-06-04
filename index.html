@@ -48,21 +48,21 @@
   <h2>자동화 요청 등록</h2>
 
   <div class="form-section">
-    <label>업무명: <input type="text" /></label><br /><br />
-    <label>부서: <input type="text" /></label><br /><br />
-    <label>반복 주기: <input type="number" min="1" />
-      <select>
+    <label>업무명: <input type="text" id="input-title" /></label><br /><br />
+    <label>부서: <input type="text" id="input-dept" /></label><br /><br />
+    <label>반복 주기: <input type="number" id="input-repeat" min="1" />
+      <select id="input-repeat-unit">
         <option>주</option>
         <option>월</option>
         <option>연</option>
       </select>
     </label><br /><br />
     <label>1회 소요 시간:
-      <input type="number" min="0" placeholder="시" style="width: 60px;" />
-      <input type="number" min="0" placeholder="분" style="width: 60px;" />
+      <input type="number" id="input-hour" min="0" placeholder="시" style="width: 60px;" />
+      <input type="number" id="input-min" min="0" placeholder="분" style="width: 60px;" />
     </label><br /><br />
     <label>설명:<br />
-      <textarea rows="3" style="width: 100%;"></textarea>
+      <textarea id="input-desc" rows="3" style="width: 100%;"></textarea>
     </label>
   </div>
 
@@ -70,12 +70,28 @@
     <h3>📌 프로세스 구조도 편집기</h3>
     <button onclick="addNode()">+ 노드 추가</button>
     <button onclick="toggleConnectMode()" id="connectBtn">↔ 연결 모드 OFF</button>
+    <button onclick="saveToFirebase()">💾 Firebase에 저장</button>
     <div id="canvas">
       <svg class="connector" id="svgConnector"></svg>
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCnqVZV56XtsUfhk0sy9rqZ9OQcTPIwMC8",
+      authDomain: "aure-64202.firebaseapp.com",
+      projectId: "aure-64202",
+      storageBucket: "aure-64202.firebasestorage.app",
+      messagingSenderId: "702763581588",
+      appId: "1:702763581588:web:6660893cf03de2e4bdb481"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase();
+
     let canvas = document.getElementById("canvas");
     let svg = document.getElementById("svgConnector");
     let nodeId = 0;
@@ -158,6 +174,39 @@
         svg.appendChild(line);
       });
     }
+
+    window.saveToFirebase = function () {
+      const requestRef = ref(db, "requests");
+      const formData = {
+        title: document.getElementById("input-title").value,
+        department: document.getElementById("input-dept").value,
+        repeat: {
+          value: document.getElementById("input-repeat").value,
+          unit: document.getElementById("input-repeat-unit").value
+        },
+        duration: {
+          hour: document.getElementById("input-hour").value,
+          minute: document.getElementById("input-min").value
+        },
+        description: document.getElementById("input-desc").value,
+        nodes: [...document.querySelectorAll('.node')].map((node) => ({
+          id: node.dataset.id,
+          x: node.offsetLeft,
+          y: node.offsetTop,
+          label: node.querySelector("strong")?.textContent || "",
+          detail: node.querySelector("input")?.value || "",
+          duration: node.querySelector("input[type='number']")?.value || 0
+        })),
+        connections: connections.map(([from, to]) => ({
+          from: from.dataset.id,
+          to: to.dataset.id
+        }))
+      };
+
+      push(requestRef, formData)
+        .then(() => alert("저장되었습니다!"))
+        .catch((err) => alert("저장 실패: " + err.message));
+    };
   </script>
 </body>
 </html>
