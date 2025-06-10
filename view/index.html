@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>요청 상세 보기</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f7f9fb;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+    #canvas {
+      border: 2px dashed #ccc;
+      width: 100%;
+      height: 500px;
+      position: relative;
+      background: #fff;
+      border-radius: 10px;
+      overflow: auto;
+    }
+    .node {
+      position: absolute;
+      background: #ffffff;
+      border: 2px solid #0077ff;
+      padding: 12px;
+      border-radius: 8px;
+      min-width: 140px;
+      min-height: 60px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      pointer-events: none;
+      text-align: center;
+    }
+    svg.connector {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .label-row {
+      margin: 6px 0;
+    }
+  </style>
+</head>
+<body>
+  <h2>🧾 요청 상세 보기</h2>
+
+  <div class="section" id="info"></div>
+  <div class="section">
+    <h3>📌 구조도 보기</h3>
+    <div id="canvas">
+      <svg class="connector" id="svgConnector"></svg>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCnqVZV56XtsUfhk0sy9rqZ9OQcTPIwMC8",
+      authDomain: "aure-64202.firebaseapp.com",
+      projectId: "aure-64202",
+      storageBucket: "aure-64202.firebasestorage.app",
+      messagingSenderId: "702763581588",
+      appId: "1:702763581588:web:6660893cf03de2e4bdb481"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app, "https://aure-64202-default-rtdb.asia-southeast1.firebasedatabase.app");
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+
+    const infoDiv = document.getElementById("info");
+    const canvas = document.getElementById("canvas");
+    const svg = document.getElementById("svgConnector");
+
+    get(child(ref(db), `requests/${id}`)).then((snapshot) => {
+      if (!snapshot.exists()) {
+        infoDiv.innerHTML = `<p>해당 요청을 찾을 수 없습니다.</p>`;
+        return;
+      }
+
+      const data = snapshot.val();
+      infoDiv.innerHTML = `
+        <div class="label-row"><strong>업무명:</strong> ${data.title}</div>
+        <div class="label-row"><strong>부서:</strong> ${data.department}</div>
+        <div class="label-row"><strong>반복 주기:</strong> ${data.repeat?.value} ${data.repeat?.unit}</div>
+        <div class="label-row"><strong>1회 소요시간:</strong> ${data.duration?.hour || 0}시간 ${data.duration?.minute || 0}분</div>
+        <div class="label-row"><strong>설명:</strong> ${data.description}</div>
+      `;
+
+      // 노드 렌더링
+      data.nodes?.forEach((node) => {
+        const div = document.createElement("div");
+        div.className = "node";
+        div.style.left = `${node.x}px`;
+        div.style.top = `${node.y}px`;
+        div.innerHTML = `<strong>${node.label}</strong><br>${node.detail}<br><small>${node.duration}분</small>`;
+        canvas.appendChild(div);
+      });
+
+      // 연결선 렌더링
+      data.connections?.forEach((conn) => {
+        const from = data.nodes.find(n => n.id == conn.from);
+        const to = data.nodes.find(n => n.id == conn.to);
+        if (!from || !to) return;
+
+        const x1 = from.x + 70; // 중간 좌표
+        const y1 = from.y + 30;
+        const x2 = to.x + 70;
+        const y2 = to.y + 30;
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("stroke", "black");
+        line.setAttribute("stroke-width", 2);
+        svg.appendChild(line);
+      });
+    });
+  </script>
+</body>
+</html>
