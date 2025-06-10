@@ -8,47 +8,55 @@
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f7f9fb;
-      padding: 20px;
       margin: 0;
+      padding: 20px;
+      color: #333;
     }
     h2 {
       margin-top: 0;
     }
-    .box {
-      background: white;
-      padding: 20px;
-      margin-bottom: 20px;
+    #canvas {
+      border: 2px dashed #ccc;
+      width: 100%;
+      height: 600px;
+      position: relative;
+      background: #fff;
       border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      overflow: auto;
     }
     .node {
+      position: absolute;
+      background: #ffffff;
       border: 2px solid #0077ff;
+      padding: 12px;
       border-radius: 8px;
-      padding: 10px;
-      margin: 10px 0;
+      min-width: 140px;
+      min-height: 60px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    .connection {
-      margin: 2px 0;
-      padding: 5px;
-      border-bottom: 1px solid #ddd;
+    svg.connector {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .connector line {
+      stroke: #333;
+      stroke-width: 2;
     }
   </style>
 </head>
 <body>
   <h2>요청 상세 보기</h2>
-  <div class="box" id="summary"></div>
-  <div class="box">
-    <h3>📌 작업 목록</h3>
-    <div id="nodes"></div>
-  </div>
-  <div class="box">
-    <h3>🔗 연결 관계</h3>
-    <div id="connections"></div>
+  <div id="canvas">
+    <svg class="connector" id="svgConnector"></svg>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCnqVZV56XtsUfhk0sy9rqZ9OQcTPIwMC8",
@@ -64,39 +72,44 @@
 
     const urlParams = new URLSearchParams(location.search);
     const id = urlParams.get("id");
+    const canvas = document.getElementById("canvas");
+    const svg = document.getElementById("svgConnector");
+    const nodeMap = new Map();
 
-    const summaryEl = document.getElementById("summary");
-    const nodesEl = document.getElementById("nodes");
-    const connectionsEl = document.getElementById("connections");
-
-    get(ref(db, `requests/${id}`)).then((snapshot) => {
+    get(child(ref(db), `requests/${id}`)).then((snapshot) => {
+      if (!snapshot.exists()) return;
       const data = snapshot.val();
 
-      if (!data) {
-        summaryEl.innerText = "요청 데이터를 찾을 수 없습니다.";
-        return;
-      }
-
-      summaryEl.innerHTML = `
-        <strong>업무명:</strong> ${data.title}<br>
-        <strong>부서:</strong> ${data.department}<br>
-        <strong>반복 주기:</strong> ${data.repeat?.value} ${data.repeat?.unit}<br>
-        <strong>1회 소요 시간:</strong> ${data.duration?.hour}시간 ${data.duration?.minute}분<br>
-        <strong>설명:</strong> ${data.description}
-      `;
-
-      (data.nodes || []).forEach((node) => {
+      data.nodes.forEach((node) => {
         const div = document.createElement("div");
         div.className = "node";
-        div.innerHTML = `<strong>${node.title}</strong><br><small>${node.desc}</small><br><em>${node.duration}분</em>`;
-        nodesEl.appendChild(div);
+        div.style.left = `${node.x}px`;
+        div.style.top = `${node.y}px`;
+        div.innerHTML = `
+          <strong>${node.label}</strong><br />
+          <div>${node.detail}</div>
+          <small>소요시간: ${node.duration}분</small>
+        `;
+        div.dataset.id = node.id;
+        nodeMap.set(node.id, div);
+        canvas.appendChild(div);
       });
 
-      (data.connections || []).forEach((conn) => {
-        const div = document.createElement("div");
-        div.className = "connection";
-        div.innerText = `#${conn.from} → #${conn.to}`;
-        connectionsEl.appendChild(div);
+      data.connections.forEach(({ from, to }) => {
+        const fromEl = nodeMap.get(from);
+        const toEl = nodeMap.get(to);
+        if (!fromEl || !toEl) return;
+        const x1 = fromEl.offsetLeft + fromEl.offsetWidth / 2;
+        const y1 = fromEl.offsetTop + fromEl.offsetHeight / 2;
+        const x2 = toEl.offsetLeft + toEl.offsetWidth / 2;
+        const y2 = toEl.offsetTop + toEl.offsetHeight / 2;
+
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        svg.appendChild(line);
       });
     });
   </script>
