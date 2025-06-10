@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>자동화 요청 목록</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f7f9fb;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .list-section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f4f8;
+    }
+    tr:hover {
+      background-color: #f9fbfd;
+    }
+    a.view-link {
+      color: #2d6cdf;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    a.view-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h2>📋 자동화 요청 목록</h2>
+
+  <div class="list-section">
+    <table>
+      <thead>
+        <tr>
+          <th>업무명</th>
+          <th>부서</th>
+          <th>반복 주기</th>
+          <th>1회 소요시간</th>
+          <th>상세보기</th>
+        </tr>
+      </thead>
+      <tbody id="request-table-body">
+        <!-- Firebase 데이터가 여기에 삽입됨 -->
+      </tbody>
+    </table>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCnqVZV56XtsUfhk0sy9rqZ9OQcTPIwMC8",
+      authDomain: "aure-64202.firebaseapp.com",
+      projectId: "aure-64202",
+      storageBucket: "aure-64202.firebasestorage.app",
+      messagingSenderId: "702763581588",
+      appId: "1:702763581588:web:6660893cf03de2e4bdb481"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app, "https://aure-64202-default-rtdb.asia-southeast1.firebasedatabase.app");
+
+    const tableBody = document.getElementById("request-table-body");
+    const requestRef = ref(db, "requests");
+
+    onValue(requestRef, (snapshot) => {
+      const data = snapshot.val();
+      tableBody.innerHTML = "";
+
+      if (!data) {
+        tableBody.innerHTML = `<tr><td colspan="5">요청 내역이 없습니다.</td></tr>`;
+        return;
+      }
+
+      Object.entries(data).forEach(([id, entry]) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${entry.title || "-"}</td>
+          <td>${entry.department || "-"}</td>
+          <td>${entry.repeat?.value || "-"} ${entry.repeat?.unit || ""}</td>
+          <td>${entry.duration?.hour || 0}시간 ${entry.duration?.minute || 0}분</td>
+          <td><a class="view-link" href="./view.html?id=${id}" target="_blank">보기</a></td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    });
+  </script>
+</body>
+</html>
