@@ -63,10 +63,10 @@
       border: 2px solid #0077ff;
       padding: 12px;
       border-radius: 8px;
-      min-width: 140px;
-      min-height: 60px;
+      min-width: 160px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       cursor: move;
+      text-align: center;
     }
     svg.connector {
       position: absolute;
@@ -152,7 +152,11 @@
     window.addNode = function () {
       const div = document.createElement("div");
       div.className = "node";
-      div.innerHTML = `<strong>작업</strong><br><input placeholder='상세내용 입력' style='width:90%'><br><small>소요시간: <input type='number' min='1' style='width:50px'> 분</small>`;
+      div.innerHTML = `
+        <input class="node-title" placeholder="작업 명" style="width:90%; font-weight:bold;"><br>
+        <textarea class="node-desc" placeholder="작업 설명" rows="2" style="width:90%; margin-top: 4px;"></textarea><br>
+        <small>소요시간: <input type="number" min="1" class="node-time" style="width:50px"> 분</small>
+      `;
       div.style.left = `${Math.random() * 300}px`;
       div.style.top = `${Math.random() * 200}px`;
       div.draggable = true;
@@ -233,9 +237,9 @@
           id: node.dataset.id,
           x: node.offsetLeft,
           y: node.offsetTop,
-          label: node.querySelector("strong")?.textContent || "",
-          detail: node.querySelector("input")?.value || "",
-          duration: node.querySelector("input[type='number']")?.value || 0
+          title: node.querySelector(".node-title")?.value || "",
+          desc: node.querySelector(".node-desc")?.value || "",
+          duration: node.querySelector(".node-time")?.value || 0
         })),
         connections: connections.map(([from, to]) => ({
           from: from.dataset.id,
