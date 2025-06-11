@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>자동화 요청 등록</title>
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f7f9fb;
@@ -13,7 +15,9 @@
       padding: 20px;
       color: #333;
     }
-    h2, h3 { margin-top: 0; }
+    h2, h3 {
+      margin-top: 0;
+    }
     .form-section {
       background: white;
       padding: 20px;
@@ -78,6 +82,15 @@
       stroke: #333;
       stroke-width: 2;
     }
+    .hint {
+      color: #aaa;
+      font-size: 0.9rem;
+    }
+    .button-guide {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -87,12 +100,7 @@
     <label>업무명: <input type="text" id="input-title" /></label><br />
     <label>작성자: <input type="text" id="input-writer" /></label><br />
     <label>부서: <input type="text" id="input-dept" /></label><br />
-    <label>반복 주기: <input type="number" id="input-repeat" min="1" style="width:80px;display:inline-block;" />
-      <select id="input-repeat-unit" style="width:auto;display:inline-block;">
-        <option value="">선택 없음</option>
-        <option value="주">주</option>
-      </select>
-    </label><br />
+    <label>반복 주기: <input type="text" id="input-repeat" placeholder="예) 주 2회" /></label><br />
     <label>1회 소요 시간:
       <input type="number" id="input-hour" min="0" placeholder="시" style="width: 60px;" />
       <input type="number" id="input-min" min="0" placeholder="분" style="width: 60px;" />
@@ -104,22 +112,23 @@
 
   <div class="form-section">
     <h3>📌 프로세스 구조도 편집기</h3>
-    <p style="color: #666; font-size: 0.95rem; margin-bottom: 10px;">
-      작업 흐름을 도형으로 구성해보세요. <strong>[노드 추가]</strong>로 작업 단계를 만들고, <strong>[작업 연결]</strong>로 선을 이어보세요. <br>
-      구조도가 완성되면 <strong>[저장하기]</strong> 버튼으로 Firebase에 저장됩니다.<br>
-      <small style="color: #999;">※ 연결된 선을 클릭하면 삭제됩니다.</small>
-    </p>
+    <div class="button-guide">
+      - [+ 노드 추가]: 작업 단계를 추가합니다.<br />
+      - [↔ 연결 모드]: 단계 간 연결선을 그립니다. 다시 눌러 해제 가능합니다.<br />
+      - [💾 Firebase에 저장]: 전체 요청을 저장합니다.<br />
+      - [📋 목록 보기]: 작성된 요청 전체 목록을 확인합니다.
+    </div>
     <button onclick="window.addNode()">+ 노드 추가</button>
-    <button onclick="window.toggleConnectMode()" id="connectBtn">↔ 작업 연결</button>
-    <button onclick="window.saveToFirebase()">💾 저장하기</button>
-    <a href="requests.html" style="text-decoration:none;"><button>📋 전체 목록</button></a>
+    <button onclick="window.toggleConnectMode()" id="connectBtn">↔ 연결 모드 OFF</button>
+    <button onclick="window.saveToFirebase()">💾 Firebase에 저장</button>
+    <a href="requests.html" style="text-decoration:none;"><button>📋 목록 보기</button></a>
     <div id="canvas">
       <svg class="connector" id="svgConnector"></svg>
     </div>
   </div>
 
   <script type="module">
-    // 기존 JS 그대로 유지됨
+    // [Firebase 연동 및 로직은 기존과 동일하게 유지]
   </script>
 </body>
 </html>
