@@ -89,6 +89,7 @@
 
   <div class="form-section">
     <label>업무명: <input type="text" id="input-title" /></label><br />
+    <label>작성자: <input type="text" id="input-writer" /></label><br />
     <label>부서: <input type="text" id="input-dept" /></label><br />
     <label>반복 주기: <input type="number" id="input-repeat" min="1" style="width:80px;display:inline-block;" />
       <select id="input-repeat-unit" style="width:auto;display:inline-block;">
@@ -223,6 +224,7 @@
       const requestRef = ref(db, "requests");
       const formData = {
         title: document.getElementById("input-title").value,
+        writer: document.getElementById("input-writer").value,
         department: document.getElementById("input-dept").value,
         repeat: {
           value: document.getElementById("input-repeat").value,
