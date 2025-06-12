@@ -21,6 +21,27 @@
       border-radius: 10px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
+    .tip-box {
+      background-color: #e8f0ff;
+      padding: 16px 20px;
+      border-left: 6px solid #2d6cdf;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    .tip-box p {
+      margin: 0;
+      font-size: 1rem;
+    }
+    .tip-box a {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background-color: #2d6cdf;
+      color: #fff;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+    }
     input, select, textarea, button {
       font-size: 1rem;
       margin: 5px 0;
@@ -82,10 +103,23 @@
       margin-top: 10px;
       margin-bottom: -10px;
     }
+    @media (max-width: 600px) {
+      .form-section, .tip-box {
+        padding: 15px;
+      }
+      input, textarea, button {
+        font-size: 0.95rem;
+      }
+    }
   </style>
 </head>
 <body>
   <h2>자동화 요청 등록</h2>
+
+  <div class="tip-box">
+    <p>작성하기 어렵다면 다른 동료들의 작성 내용을 먼저 확인해볼까요? 😊</p>
+    <a href="requests.html">📋 목록 보러 가기</a>
+  </div>
 
   <div class="form-section">
     <label>업무명: <input type="text" id="input-title" /></label><br />
@@ -108,14 +142,12 @@
     <div class="button-guide">
       ▸ [+ 노드 추가]: 새로운 작업 단계 추가<br />
       ▸ [↔ 연결 모드 ON]: 작업 간 연결선 생성<br />
-      ▸ [💾 Firebase에 저장]: 작성한 전체 요청 저장<br />
-      ▸ [📋 목록 보기]: 기존 요청 목록으로 이동
+      ▸ [💾 저장]: 작성한 전체 요청 저장
     </div>
     <br />
     <button onclick="window.addNode()">+ 노드 추가</button>
     <button onclick="window.toggleConnectMode()" id="connectBtn">↔ 연결 모드 OFF</button>
-    <button onclick="window.saveToFirebase()">💾 Firebase에 저장</button>
-    <a href="requests.html" style="text-decoration:none;"><button>📋 목록 보기</button></a>
+    <button onclick="window.saveToFirebase()">💾 저장</button>
     <div id="canvas">
       <svg class="connector" id="svgConnector"></svg>
     </div>
