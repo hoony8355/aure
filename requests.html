@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -26,6 +26,14 @@
       flex-wrap: wrap;
       gap: 10px;
       margin-bottom: 20px;
+    }
+    .description {
+      margin-bottom: 20px;
+      background: #fff4d8;
+      padding: 14px 20px;
+      border-left: 6px solid #f5b301;
+      border-radius: 8px;
+      font-size: 1rem;
     }
     .list-section {
       background: white;
@@ -103,6 +111,11 @@
     <a href="./index.html" class="back-button">← 작성 페이지로 돌아가기</a>
   </div>
 
+  <div class="description">
+    ⚠️ 구도도는 <strong>필수 항목이 아니며</strong>, 설명이 어렵다면 생략해도 괜찮습니다.<br />
+    요청 내용만 남겨주셔도 되고, <strong>이름만 남겨놔주시면 DM드릴게요!</strong>
+  </div>
+
   <div class="list-section">
     <table>
       <thead>
@@ -138,6 +151,7 @@
 
     const tableBody = document.getElementById("request-table-body");
     const requestRef = ref(db, "requests");
+    let initialized = false;
 
     onValue(requestRef, (snapshot) => {
       const data = snapshot.val();
@@ -148,7 +162,9 @@
         return;
       }
 
-      Object.entries(data).forEach(([id, entry]) => {
+      const sorted = Object.entries(data).sort((a, b) => b[1].timestamp - a[1].timestamp);
+
+      sorted.forEach(([id, entry]) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${entry.title || "-"}</td>
@@ -158,6 +174,21 @@
           <td><a class="view-link" href="./view.html?id=${id}" target="_blank">보기</a></td>
         `;
         tableBody.appendChild(tr);
+      });
+
+      if (!initialized) {
+        initialized = true;
+        return;
+      }
+
+      // ✅ 웹훅 알림 (가장 최근 항목 기준)
+      const [latestId, latestEntry] = sorted[0];
+      fetch("https://hooks.slack.com/services/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", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: `새 자동화 요청이 등록되었습니다!\n\n- 업무명: ${latestEntry.title || "-"}\n- 부서: ${latestEntry.department || "-"}\n- 반복 주기: ${latestEntry.repeat || "-"}`
+        })
       });
     });
   </script>
