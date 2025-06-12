@@ -17,6 +17,13 @@
     }
     h2 {
       margin-top: 0;
+      display: inline-block;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
     }
     .list-section {
       background: white;
@@ -47,10 +54,26 @@
     a.view-link:hover {
       text-decoration: underline;
     }
+    .back-button {
+      background-color: #2d6cdf;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .back-button:hover {
+      background-color: #1f4db8;
+    }
   </style>
 </head>
 <body>
-  <h2>📋 자동화 요청 목록</h2>
+  <div class="top-bar">
+    <h2>📋 자동화 요청 목록</h2>
+    <a href="./index.html" class="back-button">← 작성 페이지로 돌아가기</a>
+  </div>
 
   <div class="list-section">
     <table>
@@ -102,7 +125,7 @@
         tr.innerHTML = `
           <td>${entry.title || "-"}</td>
           <td>${entry.department || "-"}</td>
-          <td>${entry.repeat?.value || "-"} ${entry.repeat?.unit || ""}</td>
+          <td>${entry.repeat || "-"}</td>
           <td>${entry.duration?.hour || 0}시간 ${entry.duration?.minute || 0}분</td>
           <td><a class="view-link" href="./view.html?id=${id}" target="_blank">보기</a></td>
         `;
