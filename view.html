@@ -53,38 +53,37 @@
       stroke: #333;
       stroke-width: 2;
     }
-    input, textarea, button {
-      font-family: inherit;
-      font-size: 1rem;
-    }
     button {
       background-color: #0077ff;
       color: white;
+      padding: 8px 14px;
       border: none;
-      padding: 10px 20px;
       border-radius: 6px;
       cursor: pointer;
+      margin-bottom: 20px;
     }
-    button:hover {
-      background-color: #005dc0;
+    textarea, input {
+      padding: 6px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    #commentList {
+      list-style: none;
+      padding: 0;
+    }
+    #commentList li {
+      margin-bottom: 10px;
+      padding: 10px;
+      background: #f1f1f1;
+      border-radius: 6px;
     }
   </style>
 </head>
 <body>
-  <div style="display: flex; justify-content: space-between; align-items: center;">
-    <h2>요청 상세 보기</h2>
-    <button onclick="location.href='/board/'" style="
-      background-color: #0077ff;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    ">
-      ← 목록으로 돌아가기
-    </button>
-  </div>
+  <button onclick="location.href='index.html'">← 목록으로</button>
+
+  <h2>요청 상세 보기</h2>
 
   <div class="section">
     <div><strong>업무명:</strong> <span id="title"></span></div>
@@ -102,27 +101,24 @@
     </div>
   </div>
 
-  <div style="text-align: right; margin-top: 40px;">
-    <button onclick="location.href='/board/'" style="
-      background-color: #0077ff;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-    ">
-      ← 목록으로 돌아가기
-    </button>
+  <div class="section">
+    <h3>💬 코멘트 달기</h3>
+    <input type="text" id="commentAuthor" placeholder="작성자명" /><br />
+    <textarea id="commentText" rows="4" style="width: 100%;" placeholder="내용을 입력하세요"></textarea><br />
+    <button onclick="submitComment()">댓글 작성</button>
+    <ul id="commentList"></ul>
   </div>
+
+  <button onclick="location.href='index.html'">← 목록으로</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-    import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+    import { getDatabase, ref, get, child, push, onValue } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCnqVZV56XtsUfhk0sy9rqZ9OQcTPIwMC8",
       authDomain: "aure-64202.firebaseapp.com",
+      databaseURL: "https://aure-64202-default-rtdb.asia-southeast1.firebasedatabase.app",
       projectId: "aure-64202",
       storageBucket: "aure-64202.firebasestorage.app",
       messagingSenderId: "702763581588",
@@ -130,7 +126,7 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app, "https://aure-64202-default-rtdb.asia-southeast1.firebasedatabase.app");
+    const db = getDatabase(app);
 
     const urlParams = new URLSearchParams(location.search);
     const id = urlParams.get("id");
@@ -181,7 +177,39 @@
         svg.appendChild(line);
       });
     });
+
+    window.submitComment = () => {
+      const author = document.getElementById("commentAuthor").value.trim();
+      const text = document.getElementById("commentText").value.trim();
+      if (!author || !text) {
+        alert("작성자명과 내용을 모두 입력해주세요.");
+        return;
+      }
+
+      const commentRef = ref(db, `comments/${id}`);
+      push(commentRef, {
+        author,
+        text,
+        timestamp: Date.now()
+      });
+
+      document.getElementById("commentAuthor").value = "";
+      document.getElementById("commentText").value = "";
+    };
+
+    const commentList = document.getElementById("commentList");
+    onValue(ref(db, `comments/${id}`), (snapshot) => {
+      commentList.innerHTML = "";
+      const comments = snapshot.val();
+      if (!comments) return;
+      Object.values(comments)
+        .sort((a, b) => b.timestamp - a.timestamp)
+        .forEach((comment) => {
+          const li = document.createElement("li");
+          li.innerHTML = `<strong>${comment.author}</strong><br />${comment.text}`;
+          commentList.appendChild(li);
+        });
+    });
   </script>
 </body>
-
 </html>
