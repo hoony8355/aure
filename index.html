@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>자동화 요청 등록</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f7f9fb;
@@ -15,9 +13,7 @@
       padding: 20px;
       color: #333;
     }
-    h2, h3 {
-      margin-top: 0;
-    }
+    h2, h3 { margin-top: 0; }
     .form-section {
       background: white;
       padding: 20px;
@@ -29,7 +25,7 @@
       font-size: 1rem;
       margin: 5px 0;
     }
-    input, select, textarea {
+    input, textarea {
       padding: 8px;
       border: 1px solid #ccc;
       border-radius: 6px;
@@ -45,9 +41,7 @@
       cursor: pointer;
       transition: background-color 0.3s;
     }
-    button:hover {
-      background-color: #1f4db8;
-    }
+    button:hover { background-color: #1f4db8; }
     #canvas {
       border: 2px dashed #ccc;
       width: 100%;
@@ -82,14 +76,11 @@
       stroke: #333;
       stroke-width: 2;
     }
-    .hint {
-      color: #aaa;
-      font-size: 0.9rem;
-    }
     .button-guide {
-      font-size: 0.85rem;
-      color: #555;
+      font-size: 0.9rem;
+      color: #666;
       margin-top: 10px;
+      margin-bottom: -10px;
     }
   </style>
 </head>
@@ -100,7 +91,9 @@
     <label>업무명: <input type="text" id="input-title" /></label><br />
     <label>작성자: <input type="text" id="input-writer" /></label><br />
     <label>부서: <input type="text" id="input-dept" /></label><br />
-    <label>반복 주기: <input type="text" id="input-repeat" placeholder="예) 주 2회" /></label><br />
+    <label>반복 주기:
+      <input type="text" id="input-repeat" placeholder="예: 주 2회" />
+    </label><br />
     <label>1회 소요 시간:
       <input type="number" id="input-hour" min="0" placeholder="시" style="width: 60px;" />
       <input type="number" id="input-min" min="0" placeholder="분" style="width: 60px;" />
@@ -113,11 +106,12 @@
   <div class="form-section">
     <h3>📌 프로세스 구조도 편집기</h3>
     <div class="button-guide">
-      - [+ 노드 추가]: 작업 단계를 추가합니다.<br />
-      - [↔ 연결 모드]: 단계 간 연결선을 그립니다. 다시 눌러 해제 가능합니다.<br />
-      - [💾 Firebase에 저장]: 전체 요청을 저장합니다.<br />
-      - [📋 목록 보기]: 작성된 요청 전체 목록을 확인합니다.
+      ▸ [+ 노드 추가]: 새로운 작업 단계 추가<br />
+      ▸ [↔ 연결 모드 ON]: 작업 간 연결선 생성<br />
+      ▸ [💾 Firebase에 저장]: 작성한 전체 요청 저장<br />
+      ▸ [📋 목록 보기]: 기존 요청 목록으로 이동
     </div>
+    <br />
     <button onclick="window.addNode()">+ 노드 추가</button>
     <button onclick="window.toggleConnectMode()" id="connectBtn">↔ 연결 모드 OFF</button>
     <button onclick="window.saveToFirebase()">💾 Firebase에 저장</button>
@@ -128,7 +122,137 @@
   </div>
 
   <script type="module">
-    // [Firebase 연동 및 로직은 기존과 동일하게 유지]
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCnqVZV56XtsUfhk0sy9rqZ9OQcTPIwMC8",
+      authDomain: "aure-64202.firebaseapp.com",
+      projectId: "aure-64202",
+      storageBucket: "aure-64202.firebasestorage.app",
+      messagingSenderId: "702763581588",
+      appId: "1:702763581588:web:6660893cf03de2e4bdb481"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app, "https://aure-64202-default-rtdb.asia-southeast1.firebasedatabase.app");
+
+    const canvas = document.getElementById("canvas");
+    const svg = document.getElementById("svgConnector");
+    let nodeId = 0;
+    let connectMode = false;
+    let selectedNode = null;
+    let connections = [];
+
+    window.toggleConnectMode = function () {
+      connectMode = !connectMode;
+      document.getElementById("connectBtn").innerText = connectMode ? "↔ 연결 모드 ON" : "↔ 연결 모드 OFF";
+      if (!connectMode && selectedNode) {
+        selectedNode.style.border = "2px solid #0077ff";
+        selectedNode = null;
+      }
+    }
+
+    window.addNode = function () {
+      const div = document.createElement("div");
+      div.className = "node";
+      div.innerHTML = `
+        <input class="node-title" placeholder="작업 명" style="width:90%; font-weight:bold;"><br>
+        <textarea class="node-desc" placeholder="작업 설명" rows="2" style="width:90%; margin-top: 4px;"></textarea><br>
+        <small>소요시간: <input type="number" min="1" class="node-time" style="width:50px"> 분</small>
+      `;
+      div.style.left = `${Math.random() * 300}px`;
+      div.style.top = `${Math.random() * 200}px`;
+      div.draggable = true;
+      div.dataset.id = nodeId++;
+
+      div.onclick = (e) => {
+        e.stopPropagation();
+        if (!connectMode) return;
+        if (!selectedNode) {
+          selectedNode = div;
+          div.style.border = "2px solid red";
+        } else {
+          if (selectedNode !== div && !connectionExists(selectedNode, div)) {
+            connections.push([selectedNode, div]);
+            selectedNode.style.border = "2px solid #0077ff";
+            selectedNode = null;
+            drawConnections();
+          }
+        }
+      };
+
+      div.ondragstart = (e) => {
+        e.dataTransfer.setData("text/plain", null);
+        window.dragNode = div;
+      };
+
+      div.ondragend = (e) => {
+        div.style.left = `${e.pageX - canvas.offsetLeft - 40}px`;
+        div.style.top = `${e.pageY - canvas.offsetTop - 20}px`;
+        drawConnections();
+      };
+
+      canvas.appendChild(div);
+    }
+
+    function connectionExists(from, to) {
+      return connections.some(([a, b]) => a === from && b === to);
+    }
+
+    function drawConnections() {
+      svg.innerHTML = "";
+      connections.forEach(([from, to], index) => {
+        const x1 = from.offsetLeft + from.offsetWidth / 2;
+        const y1 = from.offsetTop + from.offsetHeight / 2;
+        const x2 = to.offsetLeft + to.offsetWidth / 2;
+        const y2 = to.offsetTop + to.offsetHeight / 2;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1);
+        line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2);
+        line.setAttribute("y2", y2);
+        line.setAttribute("stroke", "black");
+        line.setAttribute("stroke-width", 2);
+        line.dataset.index = index;
+        line.addEventListener('click', () => {
+          connections.splice(index, 1);
+          drawConnections();
+        });
+        svg.appendChild(line);
+      });
+    }
+
+    window.saveToFirebase = function () {
+      const requestRef = ref(db, "requests");
+      const formData = {
+        title: document.getElementById("input-title").value,
+        writer: document.getElementById("input-writer").value,
+        department: document.getElementById("input-dept").value,
+        repeat: document.getElementById("input-repeat").value,
+        duration: {
+          hour: document.getElementById("input-hour").value,
+          minute: document.getElementById("input-min").value
+        },
+        description: document.getElementById("input-desc").value,
+        nodes: [...document.querySelectorAll('.node')].map((node) => ({
+          id: node.dataset.id,
+          x: node.offsetLeft,
+          y: node.offsetTop,
+          title: node.querySelector(".node-title")?.value || "",
+          desc: node.querySelector(".node-desc")?.value || "",
+          duration: node.querySelector(".node-time")?.value || 0
+        })),
+        connections: connections.map(([from, to]) => ({
+          from: from.dataset.id,
+          to: to.dataset.id
+        }))
+      };
+
+      push(requestRef, formData)
+        .then(() => alert("저장되었습니다!!"))
+        .catch((err) => alert("저장 실패: " + err.message));
+    }
   </script>
 </body>
 </html>
