@@ -286,16 +286,38 @@
       .then(() => {
         alert("저장되었습니다!!");
 
-        // ✅ Slack 알림 전송
-        fetch("https://hooks.slack.com/services/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", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            text: `🆕 새 자동화 요청이 등록되었습니다!\n\n- 업무명: ${formData.title || "-"}\n- 부서: ${formData.department || "-"}\n- 작성자: ${formData.writer || "-"}\n- 반복 주기: ${formData.repeat || "-"}`
-          })
-        });
+         // ✅ Slack 알림 전송 (버튼 포함)
+    fetch("https://hooks.slack.com/services/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", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `📌 *새 자동화 요청이 등록되었습니다!*\n\n• *업무명:* ${formData.title || "-"}\n• *부서:* ${formData.department || "-"}\n• *작성자:* ${formData.writer || "-"}\n• *반복 주기:* ${formData.repeat || "-"}`
+            }
+          },
+          {
+            type: "actions",
+            elements: [
+              {
+                type: "button",
+                text: {
+                  type: "plain_text",
+                  text: "📋 게시판 보기"
+                },
+                url: "https://hoony8355.github.io/aure/requests.html",
+                style: "primary"
+              }
+            ]
+          }
+        ]
       })
-      .catch((err) => alert("저장 실패: " + err.message));
+    });
+  })
+  .catch((err) => alert("저장 실패: " + err.message));
   }
 </script>
 
